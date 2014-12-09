@@ -10,7 +10,11 @@
             [taoensso.sente :as sente]
             [union-find.dev :refer [inject-devmode-html is-dev?
                                     start-figwheel browser-repl]]
-            [union-find.event-handlers :as handlers]))
+            [union-find.event-handlers :as handlers]
+            [taoensso.timbre :as log]))
+
+(log/set-config! [:appenders :spit :enabled?] true)
+(log/set-config! [:shared-appender-config :spit-filename] "out.log")
 
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
               connected-uids]}
@@ -23,7 +27,7 @@
   )
 
 (defn event-msg-handler* [{:as ev-msg :keys [id ?data event]}]
-  (println "Event: %s" event)
+  (log/info "Event: %s" event)
   (handlers/event-msg-handler ev-msg))
 
 (defonce router_ (atom nil))

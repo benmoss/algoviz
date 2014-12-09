@@ -20,7 +20,8 @@
                  [prismatic/om-tools "0.3.6"]
                  [rhizome "0.2.1"]
                  [com.taoensso/sente "1.2.0"]
-                 [http-kit "2.1.16"]]
+                 [http-kit "2.1.16"]
+                 [com.taoensso/timbre "3.3.1"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]

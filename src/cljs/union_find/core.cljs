@@ -3,8 +3,6 @@
             [om-tools.dom :as dom :include-macros true]
             [taoensso.sente  :as sente :refer (cb-success?)]))
 
-(enable-console-print!)
-
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! "/chsk" ; Note the same path as before
        {:type :auto ; e/o #{:auto :ajax :ws}
@@ -16,16 +14,26 @@
   )
 
 (defonce app-state (atom {:text "Hello Chestnut!"
-                          :graph [[1 [2 3]] [4 [5]]]}))
+                          :graph [1 1 2 3 4 5 6]}))
 
 (defn handle-change [e data edit-key owner]
   (println "handle-change")
   (comment (om/transact! data edit-key (fn [_] (.. e -target -value)))))
 
-(defn handle-keypress [e data]
-  (println "handle-keypress")
-  (when (= (.-keyCode e) 13)
-    (create-message e data)))
+(defn graph->dot [e graph]
+  (println "handle-keypress" graph)
+  (chsk-send! [:commands/quick-find->dot graph]
+              1000
+              (fn [resp]
+                (set! js/window.foo (:dot resp))
+                (let [g (.read js/graphlibDot (:dot resp))]
+                  (set! (.-marginx (.graph g)) 20)
+                  (set! (.-marginy (.graph g)) 20)
+                  (set! (.-transition (.graph g))
+                        (fn [sel] (.duration (.transition sel) 500)))
+                  (.call (.select js/d3 "svg g")
+                         (.render js/dagreD3)
+                         g)))))
 
 (defn main []
   (om/root
@@ -34,8 +42,9 @@
         om/IRender
         (render [_]
           (dom/div
-            (dom/h1 (:text app))
-            (dom/input {:value (:text app)
-                        :onKeyDown #(handle-keypress % app)})))))
+            (dom/input {:value (pr-str (:graph app))
+                        :onKeyDown #(graph->dot % (:graph @app))})
+            (dom/h1 (pr-str (:graph app)))
+            (dom/svg {:height 600 :width 800} (dom/g))))))
     app-state
     {:target (. js/document (getElementById "app"))}))
