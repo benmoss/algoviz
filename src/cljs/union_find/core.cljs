@@ -1,5 +1,6 @@
 (ns union-find.core
   (:require [om.core :as om :include-macros true]
+            [om-tools.core :refer-macros [defcomponent]]
             [om-tools.dom :as dom :include-macros true]
             [taoensso.sente  :as sente :refer (cb-success?)]))
 
@@ -26,10 +27,9 @@
            (.render js/dagreD3)
            g)))
 
-(defn graph->dot [e app]
-  (let [graph (:graph @app)]
-    (println "graph->dot" graph)
-    (chsk-send! [:commands/quick-find->dot graph] 1000 draw-dot)))
+(defn graph->dot [graph]
+  (println "graph->dot" @graph)
+  (chsk-send! [:commands/quick-find->dot @graph] 1000 draw-dot))
 
 (defn setup-zoom []
   (let [svg (. js/d3 select "svg")
@@ -41,18 +41,14 @@
         zoom (.on (.zoom (.-behavior js/d3)) "zoom" on-zoom)]
     (.call svg zoom)))
 
-(defn main []
-  (om/root
-    (fn [app owner]
-      (reify
-        om/IRender
-        (render [_]
+(defcomponent base [app owner]
+  (render [_]
           (dom/div
-            (dom/input {:value (pr-str (:graph app))
-                        :onKeyDown #(graph->dot % app)})
             (dom/h1 (pr-str (:graph app)))
             (dom/svg {:height 600 :width 800} (dom/g))))
-        om/IDidMount
-        (did-mount [_] (setup-zoom))))
-    app-state
-    {:target (. js/document (getElementById "app"))}))
+  (did-mount [_]
+             (setup-zoom)
+             (. js/window (setTimeout (partial graph->dot (:graph app)) 200))))
+
+(defn main []
+  (om/root base app-state {:target (. js/document (getElementById "app"))}))
