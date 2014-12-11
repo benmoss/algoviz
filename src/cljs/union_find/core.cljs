@@ -14,8 +14,7 @@
   (def chsk-state state)   ; Watchable, read-only atom
   )
 
-(defonce app-state (atom {:text "Hello Chestnut!"
-                          :graph [1 1 2 3 4 5 6]}))
+(defonce app-state (atom {:graph [0 1 2 3 4 5 6]}))
 
 (defn draw-dot [resp]
   (let [g (.read js/graphlibDot (:dot resp))]
@@ -41,10 +40,18 @@
         zoom (.on (.zoom (.-behavior js/d3)) "zoom" on-zoom)]
     (.call svg zoom)))
 
+(defcomponent clickable-node [node owner]
+  (render [_] (dom/label {:class "clickable-node"}
+                         node (dom/input {:type "checkbox"}))))
+
 (defcomponent base [app owner]
   (render [_]
           (dom/div
-            (dom/h1 (pr-str (:graph app)))
+            (dom/h1 "Nodes")
+            (dom/div
+              (om/build-all clickable-node (:graph app)))
+            (dom/button "Unify!")
+            (dom/h1 "Result")
             (dom/svg {:height 600 :width 800} (dom/g))))
   (did-mount [_]
              (setup-zoom)
