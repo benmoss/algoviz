@@ -14,9 +14,23 @@
   (def chsk-state state)   ; Watchable, read-only atom
   )
 
-(defonce app-state (atom {:graph [0 1 2 3 4 5 6]}))
+(enable-console-print!)
+
+(defn gen-graph [length]
+  (mapv (fn [i] {:label i :selected false})
+        (range length)))
+
+(defonce app-state (atom {:graph (gen-graph 20)}))
+
+(defn scale-svg [d3-graph]
+  (let [svg (.select js/d3 "svg")
+        svg-group (.select js/d3 "svg g")
+        x-center-offset (/ (- (.attr svg "width") (.-width (.graph d3-graph))) 2)]
+    (.attr svg-group "transform" (str "translate(" x-center-offset ", 20)"))
+    (.attr svg "height" (+ 40 (.-height (.graph d3-graph))))))
 
 (defn draw-dot [resp]
+  (println "draw-dot" resp)
   (let [g (.read js/graphlibDot (:dot resp))]
     (set! (.-marginx (.graph g)) 20)
     (set! (.-marginy (.graph g)) 20)
@@ -40,22 +54,42 @@
         zoom (.on (.zoom (.-behavior js/d3)) "zoom" on-zoom)]
     (.call svg zoom)))
 
+(defn unify [graph]
+  (let [g @graph
+        [p q] (filter :selected g)]
+    (let [unify-node #(if (= (:label p) (:label %))
+                        (assoc % :label (:label q))
+                        %)
+          unselect #(assoc % :selected false)
+          new-graph (mapv (comp unify-node unselect) g)]
+      (om/update! graph new-graph))))
+
 (defcomponent clickable-node [node owner]
-  (render [_] (dom/label {:class "clickable-node"}
-                         node (dom/input {:type "checkbox"}))))
+  (render [_]
+          (dom/label {:class "clickable-node"}
+                     (:label node)
+                     (dom/input {:type "checkbox"
+                                 :checked (:selected node)
+                                 :onClick #(om/update! node :selected (.-checked (.-target %)))}))))
+
+(defcomponent nodes [graph owner]
+  (render [_] (dom/div
+                (dom/h1 "Nodes")
+                (dom/div (om/build-all clickable-node graph))
+                (dom/button {:onClick #(unify graph)} "Unify!")))
+  (did-mount [_]
+             (setup-zoom)
+             (. js/window (setTimeout (partial graph->dot graph) 200)))
+  (will-update [_ _ _]
+              (. js/window (setTimeout (partial graph->dot graph) 200))))
 
 (defcomponent base [app owner]
   (render [_]
           (dom/div
-            (dom/h1 "Nodes")
-            (dom/div
-              (om/build-all clickable-node (:graph app)))
-            (dom/button "Unify!")
+            (om/build nodes (:graph app))
             (dom/h1 "Result")
             (dom/svg {:height 600 :width 800} (dom/g))))
-  (did-mount [_]
-             (setup-zoom)
-             (. js/window (setTimeout (partial graph->dot (:graph app)) 200))))
+  )
 
 (defn main []
   (om/root base app-state {:target (. js/document (getElementById "app"))}))
