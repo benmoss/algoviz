@@ -57,3 +57,7 @@ svg {
 .cf {
     *zoom: 1;
 }
+
+.disabled {
+  background-color: gray;
+}

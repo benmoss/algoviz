@@ -62,18 +62,24 @@
           new-graph (mapv (comp unify-node unselect) g)]
       (om/update! graph new-graph))))
 
+(defn click-node [])
+
 (defcomponent clickable-node [node owner]
-  (render [_]
-          (dom/label {:class "clickable-node"}
-                     (:label node)
-                     (dom/input {:type "checkbox"
-                                 :checked (:selected node)
-                                 :onClick #(om/update! node :selected (.-checked (.-target %)))}))))
+  (render-state [_ {:keys [number-selected]}]
+                (let [disabled? (and (= number-selected 2)
+                                     (not (:selected node)))]
+                  (dom/label {:class (str "clickable-node" (when disabled? " disabled"))}
+                             (:label node)
+                             (dom/input {:type "checkbox"
+                                         :checked (:selected node)
+                                         :disabled disabled?
+                                         :onClick #(om/update! node :selected (.-checked (.-target %)))})))))
 
 (defcomponent nodes [graph owner]
   (render [_] (dom/div
                 (dom/h1 "Nodes")
-                (dom/div (om/build-all clickable-node graph))
+                (dom/div (om/build-all clickable-node graph {:state
+                                                             {:number-selected (->> graph (filter :selected) count)}}))
                 (dom/button {:onClick #(unify graph)} "Unify!")))
   (did-mount [_]
              (setup-zoom)

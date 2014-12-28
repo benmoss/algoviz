@@ -20,7 +20,6 @@
 
 (defmethod event-msg-handler :commands/quick-find->dot
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (log/info ?data)
   (?reply-fn {:dot (quick-find->dot ?data)}))
 
 (defmethod event-msg-handler :default ; Fallback
