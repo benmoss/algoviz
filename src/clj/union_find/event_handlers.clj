@@ -11,9 +11,10 @@
     i))
 
 (defn quick-find->dot [v]
-  (graph->dot (range 0 (count v))
-              (fn [n] (keep-indexed (partial child? n) v))
-              :node->descriptor (fn [n] {:label n})))
+  (let [labels (mapv :label v)]
+    (graph->dot (range 0 (count v))
+                (fn [n] (keep-indexed (partial child? n) labels))
+                :node->descriptor (fn [n] {:label n}))))
 
 (defmulti event-msg-handler :id) ; Dispatch on event-id
 
@@ -31,15 +32,7 @@
         (?reply-fn {:umatched-event-as-echoed-from-from-server event}))))
 
 (comment
-  (def g
-    {:a [:b :c]
-     :b [:c]
-     :c [:a]})
 
-  (view-graph (keys g) g :node->descriptor (fn [n] {:label n}))
+  (rhizome.viz/view-image (rhizome.viz/dot->image (quick-find->dot [{:label 1} {:label 1} {:label 1} {:label 2} {:label 3} {:label 4}])))
 
-  (let [x [0 1 2 3 4 5 6 7 8 9]]
-    (graph->dot (range 0 (count x))
-                (fn [n] (keep-indexed (partial child? n) x))
-                :node->descriptor (fn [n] {:label n})))
   )

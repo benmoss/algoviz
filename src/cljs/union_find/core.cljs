@@ -20,7 +20,7 @@
   (mapv (fn [i] {:label i :selected false})
         (range length)))
 
-(defonce app-state (atom {:graph (gen-graph 20)}))
+(defonce app-state (atom {:graph (gen-graph 10)}))
 
 (defn scale-svg [d3-graph]
   (let [svg (.select js/d3 "svg")
@@ -30,7 +30,6 @@
     (.attr svg "height" (+ 40 (.-height (.graph d3-graph))))))
 
 (defn draw-dot [resp]
-  (println "draw-dot" resp)
   (let [g (.read js/graphlibDot (:dot resp))]
     (set! (.-marginx (.graph g)) 20)
     (set! (.-marginy (.graph g)) 20)
@@ -41,7 +40,6 @@
            g)))
 
 (defn graph->dot [graph]
-  (println "graph->dot" @graph)
   (chsk-send! [:commands/quick-find->dot @graph] 1000 draw-dot))
 
 (defn setup-zoom []
