@@ -92,7 +92,7 @@
           (dom/div
             (om/build nodes (:graph app))
             (dom/h1 "Result")
-            (dom/svg {:height 600 :width 800} (dom/g))))
+            (dom/svg {:height 400 :width 800} (dom/g))))
   )
 
 (defn main []
