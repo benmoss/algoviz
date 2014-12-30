@@ -60,7 +60,8 @@
                         %)
           unselect #(assoc % :selected false)
           new-graph (mapv (comp unify-node unselect) g)]
-      (om/update! graph new-graph))))
+      (om/update! graph new-graph)
+      (graph->dot (atom new-graph)))))
 
 (defn click-node [])
 
@@ -83,17 +84,14 @@
                 (dom/button {:onClick #(unify graph)} "Unify!")))
   (did-mount [_]
              (setup-zoom)
-             (. js/window (setTimeout (partial graph->dot graph) 200)))
-  (will-update [_ _ _]
-              (. js/window (setTimeout (partial graph->dot graph) 200))))
+             (. js/window (setTimeout (partial graph->dot graph) 200))))
 
 (defcomponent base [app owner]
   (render [_]
           (dom/div
             (om/build nodes (:graph app))
             (dom/h1 "Result")
-            (dom/svg {:height 400 :width 800} (dom/g))))
-  )
+            (dom/svg {:height 400 :width 800} (dom/g)))))
 
 (defn main []
   (om/root base app-state {:target (. js/document (getElementById "app"))}))
